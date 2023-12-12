@@ -4,6 +4,7 @@ langchain==0.0.344
 langchain-experimental>=0.0.42
 pydantic==1.10.13
 fschat>=0.2.33
+# fschat>=0.2.32   ubuntu系统下安装0.2.33模型回答自问自答，安装的0.2.32目前还行
 xformers>=0.0.22.post7
 openai>=1.3.6
 sentence_transformers

@@ -8,3 +8,5 @@ from .qwen import QwenWorker
 from .baichuan import BaiChuanWorker
 from .azure import AzureWorker
 from .tiangong import TianGongWorker
+from .lfchatglm3 import LfChatglm3
+from .chatglm3 import Chatglm3
