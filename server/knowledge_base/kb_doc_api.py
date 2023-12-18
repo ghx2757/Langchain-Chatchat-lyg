@@ -14,7 +14,7 @@ import json
 from server.knowledge_base.kb_service.base import KBServiceFactory
 from server.db.repository.knowledge_file_repository import get_file_detail
 from langchain.docstore.document import Document
-from typing import List
+from typing import List, Dict
 
 
 class DocumentWithScore(Document):
@@ -30,11 +30,12 @@ def search_docs(
                                                   "SCORE越小，相关度越高，"
                                                   "取到1相当于不筛选，建议设置在0.5左右",
                                       ge=0, le=1),
+                                      kb_index: Dict = None,
 ) -> List[DocumentWithScore]:
     kb = KBServiceFactory.get_service_by_name(knowledge_base_name)
     if kb is None:
         return []
-    docs = kb.search_docs(query, top_k, score_threshold)
+    docs = kb.search_docs(query, top_k, score_threshold, kb_index)
     data = [DocumentWithScore(**x[0].dict(), score=x[1]) for x in docs]
     return data
 

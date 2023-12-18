@@ -1,6 +1,6 @@
 import operator
 from abc import ABC, abstractmethod
-
+from fastapi import Body
 import os
 from pathlib import Path
 import numpy as np
@@ -177,8 +177,9 @@ class KBService(ABC):
                     query: str,
                     top_k: int = VECTOR_SEARCH_TOP_K,
                     score_threshold: float = SCORE_THRESHOLD,
+                    kb_index: Dict = None,
                     ):
-        docs = self.do_search(query, top_k, score_threshold)
+        docs = self.do_search(query, top_k, score_threshold, kb_index)
         return docs
 
     def get_doc_by_ids(self, ids: List[str]) -> List[Document]:
@@ -241,9 +242,11 @@ class KBService(ABC):
                   query: str,
                   top_k: int,
                   score_threshold: float,
+                  kb_index: Dict = None,
                   ) -> List[Document]:
         """
         搜索知识库子类实自己逻辑
+        @param kb_index:
         """
         pass
 

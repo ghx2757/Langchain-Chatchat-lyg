@@ -6,6 +6,25 @@ DEFAULT_KNOWLEDGE_BASE = "samples"
 # 默认向量库/全文检索引擎类型。可选：faiss, milvus(离线) & zilliz(在线), pgvector,全文检索引擎es
 DEFAULT_VS_TYPE = "faiss"
 
+
+# 使用索引(目前仅支持faiss, pg)
+USE_KB_INDEX = True
+KB_INDEX_PATTERN = "{brand_name}_CN{category_name}_PN{product_name}_PD{produce_date}"
+# 索引格式配置
+# 如果使用索引，在导入文档时，将根据文档名称自动创建索引，同时在知识库对话页面中也会给出空的索引示例。
+# 例如索引名称格式为：{brand_name}_CN{category_name}_PN{product_name}_PD{PDproduce_date}
+# 程序通过正则表达式识别{}中的内容作为索引名称，并将"}"与"{"之间的字符串内容作为识别文件名时的分隔符。
+
+# 对于文件:海尔_CN海之友_PNHZY-001-615947098870冰柜_2023-12-18.md
+# 将会建立如下索引：
+# brand_name=海尔
+# category_name=海之友
+# product_name=HZY-001-615947098870冰柜
+# produce_date=2023-12-18
+# 在实际查询时，想要根据指定的机器的指定型号进行回答，那么在页面填入指定的索引JSON即可。
+
+
+
 # 缓存向量库数量（针对FAISS）
 CACHED_VS_NUM = 1
 
