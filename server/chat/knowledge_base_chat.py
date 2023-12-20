@@ -75,12 +75,20 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
         )
         docs = search_docs(query, knowledge_base_name, top_k, score_threshold, kb_index)
         context = "\n".join([doc.page_content for doc in docs])
-        if len(docs) == 0:  # 如果没有找到相关文档，使用empty模板
-            prompt_template = get_prompt_template("knowledge_base_chat", "empty")
-            print(f"\033[32m\n当前prompt模板prompt_template为：\n{prompt_template}\033[0m")
-        else:            
-            prompt_template = get_prompt_template("knowledge_base_chat", prompt_name)
-            print(f"\033[32m\n当前prompt模板prompt_template为：\n{prompt_template}\033[0m")
+        # if len(docs) == 0:  # 如果没有找到相关文档，使用empty模板
+        #     prompt_template = get_prompt_template("knowledge_base_chat", "empty")
+        #     print(f"\033[32m\n当前prompt模板prompt_template为：\n{prompt_template}\033[0m")
+        # else:            
+        #     prompt_template = get_prompt_template("knowledge_base_chat", prompt_name)
+        #     print(f"\033[32m\n当前prompt模板prompt_template为：\n{prompt_template}\033[0m")
+        
+        prompt_name = kb_index["brand_name"] + '+' + kb_index["category_name"] + '+' + kb_index["product_name"] + '+' + kb_index["produce_date"]
+        print(f"\033[32m\nprompt_name：\n{prompt_name}\033[0m")
+        prompt_template = get_prompt_template("knowledge_base_chat", prompt_name)
+        
+        print(f"\033[32m\nprompt_template：\n{prompt_template}\033[0m")
+
+
         input_msg = History(role="user", content=prompt_template).to_msg_template(False)
         chat_prompt = ChatPromptTemplate.from_messages(
             [i.to_msg_template() for i in history] + [input_msg])
