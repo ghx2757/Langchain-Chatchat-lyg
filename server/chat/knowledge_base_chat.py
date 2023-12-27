@@ -15,6 +15,7 @@ import json
 from pathlib import Path
 from urllib.parse import urlencode
 from server.knowledge_base.kb_doc_api import search_docs
+from Goods.goods import good_list
 
 
 async def knowledge_base_chat(query: str = Body(..., description="用户输入", examples=["你好"]),
@@ -73,64 +74,101 @@ async def knowledge_base_chat(query: str = Body(..., description="用户输入",
             max_tokens=max_tokens,
             callbacks=[callback],
         )
+        ## 从对应的知识库中寻找query相关的内容
         docs = search_docs(query, knowledge_base_name, top_k, score_threshold, kb_index)
         context = "\n".join([doc.page_content for doc in docs])
-        # if len(docs) == 0:  # 如果没有找到相关文档，使用empty模板
-        #     prompt_template = get_prompt_template("knowledge_base_chat", "empty")
-        #     print(f"\033[32m\n当前prompt模板prompt_template为：\n{prompt_template}\033[0m")
-        # else:            
-        #     prompt_template = get_prompt_template("knowledge_base_chat", prompt_name)
-        #     print(f"\033[32m\n当前prompt模板prompt_template为：\n{prompt_template}\033[0m")
-        
-        prompt_name = kb_index["brand_name"] + '+' + kb_index["category_name"] + '+' + kb_index["product_name"] + '+' + kb_index["produce_date"]
-        print(f"\033[32m\nprompt_name：\n{prompt_name}\033[0m")
-        prompt_template = get_prompt_template("knowledge_base_chat", prompt_name)
-        
-        print(f"\033[32m\nprompt_template：\n{prompt_template}\033[0m")
 
+        if len(docs) == 0:  # 如果没有找到相关文档，使用对应empty模板
+            prompt_template = get_prompt_template("knowledge_base_chat", prompt_name + "empty")
+            print(f"\033[32m\n当前prompt模板prompt_template为：{prompt_name}empty\n{prompt_template}\033[0m")
+        else:            
+            prompt_template = get_prompt_template("knowledge_base_chat", prompt_name)
+            print(f"\033[32m\n当前prompt模板prompt_template为：{prompt_name}\n{prompt_template}\033[0m")
+
+        goods = good_list[kb_index["brand_name"]][kb_index["category_name"]][kb_index["product_name"]][kb_index["produce_date"]]["context"]
+
+
+        # prompt_name = kb_index["brand_name"] + '+' + kb_index["category_name"] + '+' + kb_index["product_name"] + '+' + kb_index["produce_date"]
+        # print(f"\033[32m\nprompt_name：{prompt_name}\033[0m")
+        # prompt_template = get_prompt_template("knowledge_base_chat", prompt_name)        
+        # print(f"\033[32m\nprompt_template：\n{prompt_template}\033[0m")
 
         input_msg = History(role="user", content=prompt_template).to_msg_template(False)
         chat_prompt = ChatPromptTemplate.from_messages(
             [i.to_msg_template() for i in history] + [input_msg])
-        print(f"\033[32mchat_prompt:\n{chat_prompt}\033[0m")
+        # print(f"\033[32mchat_prompt:\n{chat_prompt}\033[0m")
         chain = LLMChain(prompt=chat_prompt, llm=model)
 
         # Begin a task that runs in the background.
-        if len(docs) != 0:
-            task = asyncio.create_task(wrap_done(
-                chain.acall({"context": context, "question": query}),
-                callback.done),
-            )
+        task = asyncio.create_task(wrap_done(
+            chain.acall({"goods":goods ,"context": context, "question": query}),
+            callback.done),
+        )
 
-            source_documents = []
-            for inum, doc in enumerate(docs):
-                filename = doc.metadata.get("source")
-                parameters = urlencode({"knowledge_base_name": knowledge_base_name, "file_name": filename})
-                base_url = request.base_url
-                url = f"{base_url}knowledge_base/download_doc?" + parameters
-                text = f"""出处 [{inum + 1}] [{filename}]({url}) \n\n{doc.page_content}\n\n"""
-                source_documents.append(text)
 
-            if stream:
-                async for token in callback.aiter():
-                    # Use server-sent-events to stream the response
-                    yield json.dumps({"answer": token}, ensure_ascii=False)
-                yield json.dumps({"docs": source_documents}, ensure_ascii=False)
-            else:
-                answer = ""
-                async for token in callback.aiter():
-                    answer += token
-                yield json.dumps({"answer": answer,
-                                "docs": source_documents},
-                                ensure_ascii=False)
-            await task
-        else:
-            source_documents = []
-            source_documents.append(f"<span style='color:red'>未找到相关文档,该回答为固定回答！</span>")
-            answer = "不好意思呀~,你提出的问题暂时难住我了，你可以换一个有关该商品信息的问题，或者描述的详细一点===ღ( ´･ᴗ･` )"
-            for str in answer:
-                yield json.dumps({"answer": str} ,ensure_ascii=False)
+        source_documents = []
+        for inum, doc in enumerate(docs):
+            filename = doc.metadata.get("source")
+            parameters = urlencode({"knowledge_base_name": knowledge_base_name, "file_name": filename})
+            base_url = request.base_url
+            url = f"{base_url}knowledge_base/download_doc?" + parameters
+            text = f"""出处 [{inum + 1}] [{filename}]({url}) \n\n{doc.page_content}\n\n"""
+            source_documents.append(text)
+
+        if len(source_documents) == 0:  # 没有找到相关文档
+            source_documents.append(f"<span style='color:red'>未找到相关文档,该回答为大模型自身能力解答！</span>")
+
+        if stream:
+            async for token in callback.aiter():
+                # Use server-sent-events to stream the response
+                yield json.dumps({"answer": token}, ensure_ascii=False)
             yield json.dumps({"docs": source_documents}, ensure_ascii=False)
+        else:
+            answer = ""
+            async for token in callback.aiter():
+                answer += token
+            yield json.dumps({"answer": answer,
+                            "docs": source_documents},
+                            ensure_ascii=False)
+
+        await task
+
+        # 匹配不到不走大模型.
+        # if len(docs) != 0:
+        #     task = asyncio.create_task(wrap_done(
+        #         chain.acall({"goods":goods ,"context": context, "question": query}),
+        #         callback.done),
+        #     )
+            
+        #     source_documents = []
+        #     for inum, doc in enumerate(docs):
+        #         filename = doc.metadata.get("source")
+        #         parameters = urlencode({"knowledge_base_name": knowledge_base_name, "file_name": filename})
+        #         base_url = request.base_url
+        #         url = f"{base_url}knowledge_base/download_doc?" + parameters
+        #         text = f"""出处 [{inum + 1}] [{filename}]({url}) \n\n{doc.page_content}\n\n"""
+        #         source_documents.append(text)
+
+        #     if stream:
+        #         async for token in callback.aiter():
+        #             # Use server-sent-events to stream the response
+        #             yield json.dumps({"answer": token}, ensure_ascii=False)
+        #         yield json.dumps({"docs": source_documents}, ensure_ascii=False)
+        #     else:
+        #         answer = ""
+        #         async for token in callback.aiter():
+        #             answer += token
+        #         yield json.dumps({"answer": answer,
+        #                         "docs": source_documents},
+        #                         ensure_ascii=False)
+        #     await task
+        # else:
+        #     source_documents = []
+        #     source_documents.append(f"<span style='color:red'>未找到相关文档,该回答为固定回答！</span>")
+        #     answer = "不好意思呀~,你提出的问题暂时难住我了，你可以换一个有关该商品信息的问题，或者描述的详细一点===ღ( ´･ᴗ･` )"
+        #     for str in answer:
+        #         yield json.dumps({"answer": str} ,ensure_ascii=False)
+        #     yield json.dumps({"docs": source_documents}, ensure_ascii=False)
 
     return StreamingResponse(knowledge_base_chat_iterator(query=query,
                                                           top_k=top_k,

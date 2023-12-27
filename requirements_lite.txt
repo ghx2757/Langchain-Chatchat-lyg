@@ -13,7 +13,7 @@ SQLAlchemy==2.0.19
 numexpr>=2.8.7
 strsimpy>=0.2.1
 
-faiss-cpu
+# faiss-cpu
 # accelerate>=0.24.1
 # spacy>=3.7.2
 # PyMuPDF==1.22.5 # install if need pdf
