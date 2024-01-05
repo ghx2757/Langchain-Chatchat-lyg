@@ -1,5 +1,5 @@
 from fastapi import Body, File, Form, UploadFile
-from fastapi.responses import StreamingResponse
+from sse_starlette.sse import EventSourceResponse
 from configs import (LLM_MODELS, VECTOR_SEARCH_TOP_K, SCORE_THRESHOLD, TEMPERATURE,
                      CHUNK_SIZE, OVERLAP_SIZE, ZH_TITLE_ENHANCE)
 from server.utils import (wrap_done, get_ChatOpenAI,
@@ -125,7 +125,7 @@ async def file_chat(query: str = Body(..., description="用户输入", examples=
             callbacks=[callback],
         )
         embed_func = EmbeddingsFunAdapter()
-        embeddings = embed_func.embed_query(query)
+        embeddings = await embed_func.aembed_query(query)
         with memo_faiss_pool.acquire(knowledge_id) as vs:
             docs = vs.similarity_search_with_score_by_vector(embeddings, k=top_k, score_threshold=score_threshold)
             docs = [x[0] for x in docs]
@@ -170,4 +170,4 @@ async def file_chat(query: str = Body(..., description="用户输入", examples=
                              ensure_ascii=False)
         await task
 
-    return StreamingResponse(knowledge_base_chat_iterator(), media_type="text/event-stream")
+    return EventSourceResponse(knowledge_base_chat_iterator())
