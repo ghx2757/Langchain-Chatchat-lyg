@@ -40,7 +40,7 @@ if __name__ == "__main__":
         st.image(
             os.path.join(
                 "img",
-                "元客视界.png"
+                "滚雪卡通动图.gif"
             ),
             use_column_width=True
         )

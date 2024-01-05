@@ -1,5 +1,4 @@
 from langchain.memory import ConversationBufferWindowMemory
-
 from server.agent.custom_agent.ChatGLM3Agent import initialize_glm3_agent
 from server.agent.tools_select import tools, tool_names
 from server.agent.callbacks import CustomAsyncIteratorCallbackHandler, Status
@@ -44,10 +43,13 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
             prompt_name: str = prompt_name,
     ) -> AsyncIterable[str]:
         nonlocal max_tokens
+
+        # 1、callback
         callback = CustomAsyncIteratorCallbackHandler()
         if isinstance(max_tokens, int) and max_tokens <= 0:
             max_tokens = None
-
+        
+        # 2、model
         model = get_ChatOpenAI(
             model_name=model_name,
             temperature=temperature,
@@ -55,7 +57,7 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
             callbacks=[callback],
         )
 
-        ## 传入全局变量来实现agent调用
+        ## 3、传入全局变量来实现agent调用
         kb_list = {x["kb_name"]: x for x in get_kb_details()}
         model_container.DATABASE = {name: details['kb_info'] for name, details in kb_list.items()}
 
@@ -70,15 +72,21 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
             model_container.MODEL = model_agent
         else:
             model_container.MODEL = model
-
+        
+        # 4、模板
         prompt_template = get_prompt_template("agent_chat", prompt_name)
         prompt_template_agent = CustomPromptTemplate(
             template=prompt_template,
             tools=tools,
             input_variables=["input", "intermediate_steps", "history"]
         )
+
+        # 输出参数 
         output_parser = CustomOutputParser()
+
+        # llm_chain
         llm_chain = LLMChain(llm=model, prompt=prompt_template_agent)
+
         # 把history转成agent的memory
         memory = ConversationBufferWindowMemory(k=HISTORY_LEN * 2)
         for message in history:
