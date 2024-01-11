@@ -155,23 +155,22 @@ class StructuredGLM3ChatAgent(Agent):
         tool_names = []
         for tool in tools:
             tool_config = tool_config_from_file(tool.name)
+            
             if tool_config:
                 tools_json.append(tool_config)
                 tool_names.append(tool.name)
-
         # Format the tools for output
         formatted_tools = "\n".join([
             f"{tool['name']}: {tool['description']}, args: {tool['parameters']}"
             for tool in tools_json
         ])
         formatted_tools = formatted_tools.replace("'", "\\'").replace("{", "{{").replace("}", "}}")
-
         template = prompt.format(tool_names=tool_names,
                                  tools=formatted_tools,
                                  history="{history}",
                                  input="{input}",
                                  agent_scratchpad="{agent_scratchpad}")
-
+        print(f"\033[32mtemplate\n:{template}\033[0m")
         if input_variables is None:
             input_variables = ["input", "agent_scratchpad"]
         _memory_prompts = memory_prompts or []
@@ -248,4 +247,3 @@ def initialize_glm3_agent(
         tags=tags_,
         **kwargs,
     )
-

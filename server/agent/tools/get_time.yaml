@@ -1,0 +1,10 @@
+name: get_time
+description: Useful for when you need to answer questions about Date or Time.
+parameters:
+  type: object
+  properties:
+    query:
+      type: string
+      description: The Current question 
+required:
+  - query

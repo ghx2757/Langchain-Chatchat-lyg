@@ -1,9 +1,29 @@
 from langchain.tools import Tool
 from server.agent.tools import *
 
+
 ## 请注意，如果你是为了使用AgentLM，在这里，你应该使用英文版本。
 
 tools = [
+    # Tool.from_function(
+    #     func=get_time,
+    #     name="get_time",
+    #     description="Useful for when you need to answer questions about Date or Time.",
+    #     args_schema=GetTime,
+    # ),
+    # Tool.from_function(
+    #     func=get_weather,
+    #     name="get_weather",
+    #     description="Useful for when you need to answer questions about weather information. Input should be a string of city and country split by ',', both must be in English, the country should be a ISO 3166-1 alpha-2 code, for example 'London,GB'.",
+    #     args_schema=GetWeather,
+    # ),
+    # Tool.from_function(
+    #     func=webglm,
+    #     name="webglm",
+    #     description="Useful for when you are unable to obtain the latest news about the question, use this tool for online search.",
+    # ),
+    
+
     Tool.from_function(
         func=calculate,
         name="calculate",
@@ -55,3 +75,7 @@ tools = [
 ]
 
 tool_names = [tool.name for tool in tools]
+
+
+
+    

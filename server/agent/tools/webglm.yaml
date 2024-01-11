@@ -1,0 +1,10 @@
+name: webglm
+description: Useful for when you are unable to obtain the latest news about the question, use this tool for online search.
+parameters:
+  type: object
+  properties:
+    query:
+      type: string
+      description: The description of this real-time question.
+required:
+  - query

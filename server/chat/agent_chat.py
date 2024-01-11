@@ -80,13 +80,15 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
             tools=tools,
             input_variables=["input", "intermediate_steps", "history"]
         )
+        print(f"\033[32mtools\n:{tools}\033[0m")
+
 
         # 输出参数 
         output_parser = CustomOutputParser()
 
         # llm_chain
         llm_chain = LLMChain(llm=model, prompt=prompt_template_agent)
-
+        # print(f"\033[32mAgent输入前提示模板:{llm_chain.prompt}\033[0m")
         # 把history转成agent的memory
         memory = ConversationBufferWindowMemory(k=HISTORY_LEN * 2)
         for message in history:
@@ -121,6 +123,8 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
                                                                 verbose=True,
                                                                 memory=memory,
                                                                 )
+            
+        
         while True:
             try:
                 task = asyncio.create_task(wrap_done(
@@ -135,6 +139,7 @@ async def agent_chat(query: str = Body(..., description="用户输入", examples
                 tools_use = []
                 # Use server-sent-events to stream the response
                 data = json.loads(chunk)
+                print(f"\033[32mAgent输出data\n:{data}\033[0m")
                 if data["status"] == Status.start or data["status"] == Status.complete:
                     continue
                 elif data["status"] == Status.error:

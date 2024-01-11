@@ -9,3 +9,7 @@ from .search_internet import search_internet, SearchInternetInput
 from .wolfram import wolfram, WolframInput
 from .search_youtube import search_youtube, YoutubeInput
 from .arxiv import arxiv, ArxivInput
+
+from .get_time import get_time, GetTime
+from .get_weather import get_weather, GetWeather
+from .webglm import webglm

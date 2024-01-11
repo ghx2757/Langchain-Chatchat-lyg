@@ -1,0 +1,10 @@
+name: get_weather
+description: Useful for when you need to answer questions about weather information. Input should be a string of city and country split by ',', both must be in English, the country should be a ISO 3166-1 alpha-2 code, for example 'London,GB'.
+parameters:
+  type: object
+  properties:
+    query:
+      type: string
+      description: The English name of the city where the weather needs to be queried
+required:
+  - query
